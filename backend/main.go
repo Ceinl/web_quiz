@@ -1,54 +1,55 @@
 package main
 
 import (
-	"fmt"
+	"context"
+	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"quiz/handlers"
-
+	"quiz/storage"
+	"time"
 )
 
-
-type Room struct {
-	AccesKey string
-	Users []string
-	Questions []questions
-}
-
-type questions struct {
-	Question string
-}
-
-func createRoom () Room {
-	q:= questions {"test"}
-	qq := []questions{q}
-	u := []string {"Dima","Vlad"}
-
-	return Room{"qwerty", u, qq} //TODO: Make this a sqlite db and way to create/delete from db
-
-}
-
-
-
 func main() {
+	db, err := storage.CreateDatabase("game.db")
+	if err != nil {
+    	log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer db.Close()
 
-//	room := createRoom()
-	fmt.Println("log")
+	http.HandleFunc("/api/host", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HostHandler(db, w, r)
+	})
 
-	http.HandleFunc("/api/host", handlers.HostHandler)
+	http.HandleFunc("/api/start_game", func(w http.ResponseWriter, r *http.Request) {
+		handlers.Game(db, w, r)
+	})
 
-    http.HandleFunc("/api/connect", func(w http.ResponseWriter, r *http.Request) {
-        w.Header().Set("Access-Control-Allow-Origin", "*") 
-        w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS") 
-        w.Header().Set("Access-Control-Allow-Headers", "HX-Request, HX-Target, HX-Current-URL, Content-Type") 
-        if r.Method == http.MethodOptions {
-            w.WriteHeader(http.StatusOK)
-            return
-        }
-		fmt.Fprintf(w, "Hello from the Go backend!") // TODO: Send 4 buttons that return your answer
-    })
+	http.HandleFunc("/api/connect", func(w http.ResponseWriter, r *http.Request) {
+		handlers.Connect(db, w, r)
+	})
 
+	srv := &http.Server{Addr: ":8081"}
+	
+	go func() {
+		log.Println("Backend running at httr://localhost:8081")
+		if 	err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed{
+			log.Printf("Server error: %v", err)
+		}
+			
+	}()
 
+	quit := make(chan os.Signal,1)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+	log.Printf("Shutting down server...")
+	ctx,canel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer canel()
 
-    fmt.Println("Backend running at http://localhost:8081")
-    http.ListenAndServe(":8081", nil)
+	if err := srv.Shutdown(ctx); err != nil{
+		log.Fatalf("Server shutdown failed: %v", err)
+	}
+	log.Printf("Sever stopped")
+
 } 

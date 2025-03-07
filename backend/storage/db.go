@@ -12,7 +12,7 @@ type Database struct {
 	DB *sql.DB
 }
 
-func CreaateDatabase(dbPath string) (*Database, error) {
+func CreateDatabase(dbPath string) (*Database, error) {
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
@@ -64,9 +64,10 @@ func (d *Database) CreateQuestion(id, question, correctAnswer, incorrectAnswers 
 	return err
 }
 
-func (d *Database) CreateRoom(roomId, questionId, playerId string) error {
-	_, err := d.DB.Exec("INSERT INTO room (id, question_id, player_id) VALUES (?, ?, ?)", roomId, questionId, playerId)
-	return err
+func (d *Database) CreateRoom(questionId, playerId string) (string,error) {
+	id, _ := d.CreateUniqueRoomId()
+	_, err := d.DB.Exec("INSERT INTO room (id, question_id, player_id) VALUES (?, ?, ?)", id, questionId, playerId)
+	return id, err
 }
 
 func (d *Database) GetPlayer(id string) (string,int,error) {

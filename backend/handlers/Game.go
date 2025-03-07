@@ -1,19 +1,26 @@
 package handlers
 
 import (
-	"html/template"
-	"log"
-	"net/http"
-	"path/filepath"
+    "html/template"
+    "log"
+    "net/http"
+    "path/filepath"
 	"quiz/storage"
 )
 
-type HostData struct {
+
+type PageData struct{
+	Question string
 	AccesKey string
 }
 
+var GameInstance PageData
 
-func HostHandler(db *storage.Database ,w http.ResponseWriter, r *http.Request) {
+
+
+
+func Game (db *storage.Database ,w http.ResponseWriter, r *http.Request) {
+
     w.Header().Set("Access-Control-Allow-Origin", "*")
     w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
     w.Header().Set("Access-Control-Allow-Headers", "HX-Request, HX-Target, HX-Current-URL, Content-Type")
@@ -22,13 +29,9 @@ func HostHandler(db *storage.Database ,w http.ResponseWriter, r *http.Request) {
         w.WriteHeader(http.StatusOK)
         return
     }
-	// Make a room --
 
-	key, _ := db.CreateUniqueRoomId()
-	hd := HostData{
-		AccesKey:  key,
-	}
-	
+	GameInstance.AccesKey = r.URL.Query().Get("acces_key")
+
     tmplPath := filepath.Join("templates", "fragment.html")
 
     tmpl, err := template.ParseFiles(tmplPath)
@@ -36,35 +39,9 @@ func HostHandler(db *storage.Database ,w http.ResponseWriter, r *http.Request) {
         log.Println("Error loading template:", err)
         http.Error(w, "Error loading template", http.StatusInternalServerError)
         return
-    }
+	}
+	
 
+	err = tmpl.ExecuteTemplate(w,"Game",GameInstance)
 
-    err = tmpl.ExecuteTemplate(w,"waitingRoom",hd)
-    if err != nil {
-        http.Error(w, "Error rendering template", http.StatusInternalServerError)
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+}	
