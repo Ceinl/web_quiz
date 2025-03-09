@@ -12,7 +12,6 @@ type HostData struct {
 	AccesKey string
 }
 
-
 func HostHandler(db *storage.Database ,w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Access-Control-Allow-Origin", "*")
     w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -22,8 +21,6 @@ func HostHandler(db *storage.Database ,w http.ResponseWriter, r *http.Request) {
         w.WriteHeader(http.StatusOK)
         return
     }
-	// Make a room --
-
 	key, _ := db.CreateUniqueRoomId()
 	hd := HostData{
 		AccesKey:  key,
@@ -45,8 +42,9 @@ func HostHandler(db *storage.Database ,w http.ResponseWriter, r *http.Request) {
     }
 }
 
+func Import_questions (db *storage.Database ,w http.ResponseWriter, r *http.Request) {
 
-
+} 
 
 
 

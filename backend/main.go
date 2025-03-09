@@ -18,9 +18,14 @@ func main() {
 	}
 	defer db.Close()
 
-	http.HandleFunc("/api/host", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/api/host", func(w http.ResponseWriter, r *http.Request) { // +
 		handlers.HostHandler(db, w, r)
 	})
+
+	http.HandleFunc("/api/import_questions", func(w http.ResponseWriter, r *http.Request) {
+		handlers.Import_questions(db, w, r)
+	})
+
 
 	http.HandleFunc("/api/start_game", func(w http.ResponseWriter, r *http.Request) {
 		handlers.Game(db, w, r)
