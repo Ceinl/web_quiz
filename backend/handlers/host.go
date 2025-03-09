@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"quiz/storage"
+//	"encoding/csv"
 )
 
 type HostData struct {
@@ -43,26 +44,6 @@ func HostHandler(db *storage.Database ,w http.ResponseWriter, r *http.Request) {
 }
 
 func Import_questions (db *storage.Database ,w http.ResponseWriter, r *http.Request) {
-
 } 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

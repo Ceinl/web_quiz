@@ -19,19 +19,23 @@ func main() {
 	defer db.Close()
 
 	http.HandleFunc("/api/host", func(w http.ResponseWriter, r *http.Request) { // +
+		log.Printf("Host called")
 		handlers.HostHandler(db, w, r)
 	})
 
 	http.HandleFunc("/api/import_questions", func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Import called")
 		handlers.Import_questions(db, w, r)
 	})
 
 
 	http.HandleFunc("/api/start_game", func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Start called")
 		handlers.Game(db, w, r)
 	})
 
 	http.HandleFunc("/api/connect", func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Connect called")
 		handlers.Connect(db, w, r)
 	})
 
