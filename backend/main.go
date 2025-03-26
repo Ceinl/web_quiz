@@ -1,5 +1,9 @@
 package main
 
+/*
+
+ */
+
 import (
 	"context"
 	"log"
@@ -14,7 +18,7 @@ import (
 func main() {
 	db, err := storage.CreateDatabase("game.db")
 	if err != nil {
-    	log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	defer db.Close()
 
@@ -23,11 +27,14 @@ func main() {
 		handlers.HostHandler(db, w, r)
 	})
 
+	// Replace this handler
 	http.HandleFunc("/api/import_questions", func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Import called")
-		handlers.Import_questions(db, w, r)
+		handlers.ImportQuestionsHandler(db, w, r)
 	})
 
+	// And fix the typo in the log message
+	log.Println("Backend running at http://localhost:8081")
 
 	http.HandleFunc("/api/start_game", func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Start called")
@@ -40,25 +47,28 @@ func main() {
 	})
 
 	srv := &http.Server{Addr: ":8081"}
-	
+
 	go func() {
+		// Fix typo in URL
 		log.Println("Backend running at httr://localhost:8081")
-		if 	err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed{
+		// Should be
+		log.Println("Backend running at http://localhost:8081")
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Printf("Server error: %v", err)
 		}
-			
+
 	}()
 
-	quit := make(chan os.Signal,1)
+	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	<-quit
 	log.Printf("Shutting down server...")
-	ctx,canel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, canel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer canel()
 
-	if err := srv.Shutdown(ctx); err != nil{
+	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatalf("Server shutdown failed: %v", err)
 	}
 	log.Printf("Sever stopped")
 
-} 
+}

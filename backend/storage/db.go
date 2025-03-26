@@ -5,6 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 	"math/big"
+
+	"strings"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -46,7 +49,7 @@ func CreateDatabase(dbPath string) (*Database, error) {
 		return nil, fmt.Errorf("failed to create tables: %w", err)
 	}
 
-	return &Database{DB: db}, nil
+	return &Database{DB: db}, nihttps://www.youtube.com/watch?v=RK5ZTYCPYg8&ab_channel=ThePrimeTimel
 }
 
 func (d *Database) Close() {
@@ -58,27 +61,27 @@ func (d *Database) CreatePlayer(id, name string, score int) error {
 	return err
 }
 
-func (d *Database) CreateQuestion(id, question, correctAnswer, incorrectAnswers string) error {
+func (d *Database) CreateQuestion(q Question) error {
 	_, err := d.DB.Exec("INSERT INTO questions (id, question, correct_answer, incorrect_answers) VALUES (?, ?, ?, ?)",
-		id, question, correctAnswer, incorrectAnswers)
+		q.Id, q.Question, q.CorrectAnswer, q.IncorrectAnswer)
 	return err
 }
 
-func (d *Database) CreateRoom(questionId, playerId string) (string,error) {
+func (d *Database) CreateRoom(questionId, playerId string) (string, error) {
 	id, _ := d.CreateUniqueRoomId()
 	_, err := d.DB.Exec("INSERT INTO room (id, question_id, player_id) VALUES (?, ?, ?)", id, questionId, playerId)
 	return id, err
 }
 
-func (d *Database) GetPlayer(id string) (string,int,error) {
+func (d *Database) GetPlayer(id string) (string, int, error) {
 	row := d.DB.QueryRow("SELECT name, score FROM players WHERE id = ?", id)
 	var name string
 	var score int
-	err := row.Scan(&name,&score)
+	err := row.Scan(&name, &score)
 	if err != nil {
-		return "",0, err
+		return "", 0, err
 	}
-	return name,score, nil 
+	return name, score, nil
 }
 
 func (d *Database) IncreasePlayerScore(id string, score int) error {
@@ -107,5 +110,57 @@ func (d *Database) CreateUniqueRoomId() (string, error) {
 	}
 }
 
+// Add these new methods after existing methods
 
+func (d *Database) ValidateContentType(contentType string) bool {
+	return strings.HasPrefix(contentType, "multipart/form-data")
+}
 
+func (d *Database) GetQuestionsByRoomId(roomId string) ([]Question, error) {
+	rows, err := d.DB.Query(`
+        SELECT q.id, q.question, q.correct_answer, q.incorrect_answers 
+        FROM questions q 
+        JOIN room r ON r.question_id = q.id 
+        WHERE r.id = ?`, roomId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get questions: %w", err)
+	}
+	defer rows.Close()
+
+	var questions []Question
+	for rows.Next() {
+		var q Question
+		if err := rows.Scan(&q.Id, &q.Question, &q.CorrectAnswer, &q.IncorrectAnswer); err != nil {
+			return nil, fmt.Errorf("failed to scan question: %w", err)
+		}
+		questions = append(questions, q)
+	}
+	return questions, nil
+}
+
+func (d *Database) ValidateRoom(roomId string) (bool, error) {
+	var exists bool
+	err := d.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM room WHERE id = ?)", roomId).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("failed to check room existence: %w", err)
+	}
+	return exists, nil
+}
+
+// Add this method to your Database struct
+
+func (d *Database) ProcessFileUpload(contentType string, fileSize int64) error {
+	if contentType == "" {
+		return fmt.Errorf("content type is missing")
+	}
+
+	if !strings.HasPrefix(contentType, "multipart/form-data") {
+		return fmt.Errorf("invalid content type: %s, expected multipart/form-data", contentType)
+	}
+
+	if fileSize > 10<<20 { // 10 MB limit
+		return fmt.Errorf("file too large: %d bytes", fileSize)
+	}
+
+	return nil
+}
